@@ -10,6 +10,7 @@ pub mod memory_store;
 pub mod screenshot;
 pub mod shell;
 pub mod traits;
+pub mod exa_search;
 
 pub use browser::BrowserTool;
 pub use browser_open::BrowserOpenTool;
@@ -22,6 +23,7 @@ pub use memory_recall::MemoryRecallTool;
 pub use memory_store::MemoryStoreTool;
 pub use screenshot::ScreenshotTool;
 pub use shell::ShellTool;
+pub use exa_search::ExaSearchTool;
 pub use traits::Tool;
 #[allow(unused_imports)]
 pub use traits::{ToolResult, ToolSpec};
@@ -53,6 +55,7 @@ pub fn all_tools(
     security: &Arc<SecurityPolicy>,
     memory: Arc<dyn Memory>,
     composio_key: Option<&str>,
+    exa_key: Option<&str>,
     browser_config: &crate::config::BrowserConfig,
 ) -> Vec<Box<dyn Tool>> {
     all_tools_with_runtime(
@@ -60,6 +63,7 @@ pub fn all_tools(
         Arc::new(NativeRuntime::new()),
         memory,
         composio_key,
+        exa_key,
         browser_config,
     )
 }
@@ -70,6 +74,7 @@ pub fn all_tools_with_runtime(
     runtime: Arc<dyn RuntimeAdapter>,
     memory: Arc<dyn Memory>,
     composio_key: Option<&str>,
+    exa_key: Option<&str>,
     browser_config: &crate::config::BrowserConfig,
 ) -> Vec<Box<dyn Tool>> {
     let mut tools: Vec<Box<dyn Tool>> = vec![
@@ -102,6 +107,12 @@ pub fn all_tools_with_runtime(
     if let Some(key) = composio_key {
         if !key.is_empty() {
             tools.push(Box::new(ComposioTool::new(key)));
+        }
+    }
+
+    if let Some(key) = exa_key {
+        if !key.is_empty() {
+            tools.push(Box::new(ExaSearchTool::new(key.to_string())));
         }
     }
 

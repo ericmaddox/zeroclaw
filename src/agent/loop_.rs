@@ -305,6 +305,7 @@ pub async fn run(
         runtime,
         mem.clone(),
         composio_key,
+        config.search.exa_api_key.as_deref(),
         &config.browser,
     );
 
@@ -358,6 +359,10 @@ pub async fn run(
         (
             "memory_forget",
             "Delete a memory entry. Use when: memory is incorrect/stale or explicitly requested for removal. Don't use when: impact is uncertain.",
+        ),
+        (
+            "exa_search",
+            "Search the web using Exa AI. Use when: you need real-time information, news, or high-quality links that aren't in your training data.",
         ),
     ];
     tool_descs.push((

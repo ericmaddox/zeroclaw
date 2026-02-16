@@ -62,6 +62,9 @@ pub struct Config {
     pub browser: BrowserConfig,
 
     #[serde(default)]
+    pub search: SearchConfig,
+
+    #[serde(default)]
     pub identity: IdentityConfig,
 }
 
@@ -831,9 +834,18 @@ impl Default for Config {
             composio: ComposioConfig::default(),
             secrets: SecretsConfig::default(),
             browser: BrowserConfig::default(),
+            search: SearchConfig::default(),
             identity: IdentityConfig::default(),
         }
     }
+}
+
+// ── Search (Exa AI, etc.) ────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SearchConfig {
+    /// Exa AI API key
+    pub exa_api_key: Option<String>,
 }
 
 impl Config {
