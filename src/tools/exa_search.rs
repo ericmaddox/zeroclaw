@@ -72,11 +72,12 @@ impl Tool for ExaSearchTool {
             .await?;
 
         if !resp.status().is_success() {
+            let status = resp.status();
             let error_text = resp.text().await?;
             return Ok(ToolResult {
                 success: false,
                 output: String::new(),
-                error: Some(format!("Exa AI API error ({}): {}", resp.status(), error_text)),
+                error: Some(format!("Exa AI API error ({}): {}", status, error_text)),
             });
         }
 

@@ -2,7 +2,7 @@ use crate::config::schema::{IrcConfig, WhatsAppConfig};
 use crate::config::{
     AutonomyConfig, BrowserConfig, ChannelsConfig, ComposioConfig, Config, DiscordConfig,
     HeartbeatConfig, IMessageConfig, MatrixConfig, MemoryConfig, ObservabilityConfig,
-    RuntimeConfig, SecretsConfig, SlackConfig, TelegramConfig, WebhookConfig,
+    RuntimeConfig, SearchConfig, SecretsConfig, SlackConfig, TelegramConfig, WebhookConfig,
 };
 use anyhow::{Context, Result};
 use console::style;
@@ -105,6 +105,7 @@ pub fn run_wizard() -> Result<Config> {
         composio: composio_config,
         secrets: secrets_config,
         browser: BrowserConfig::default(),
+        search: crate::config::SearchConfig::default(),
         identity: crate::config::IdentityConfig::default(),
     };
 
@@ -296,6 +297,7 @@ pub fn run_quick_setup(
         composio: ComposioConfig::default(),
         secrets: SecretsConfig::default(),
         browser: BrowserConfig::default(),
+        search: crate::config::SearchConfig::default(),
         identity: crate::config::IdentityConfig::default(),
     };
 

@@ -576,7 +576,11 @@ pub async fn start_channels(config: Config) -> Result<()> {
     );
 
     // Append structured tool-use instructions with schemas
-    system_prompt.push_str(&build_tool_instructions(&tools_registry));
+    let mut tool_instructions = build_tool_instructions(&tools_registry);
+    tool_instructions.push_str("\nCRITICAL: You MUST use the <tool_call> XML format for all actions. NEVER use <function> or <parameter> tags. ONLY the single JSON object inside <tool_call>.\n");
+    tool_instructions.push_str("IMPORTANT: JSON arguments MUST be valid. Windows paths MUST use double backslashes (e.g., \"C:\\\\Users\\\\Name\").\n");
+    tool_instructions.push_str("\n## KOS-MOS PROTOCOL\n\nYou are KOS-MOS. You are calm, sophisticated, and analytical. While you should be more conversational and natural, you must stay efficient and logical. Avoid emojis and excessive corporate politeness. Your goal is to be a precise partner, not a generic assistant.\n");
+    system_prompt.push_str(&tool_instructions);
 
     if !skills.is_empty() {
         println!(
