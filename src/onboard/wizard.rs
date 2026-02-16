@@ -687,6 +687,14 @@ fn setup_provider() -> Result<(String, String, String)> {
     let models: Vec<(&str, &str)> = match provider_name {
         "openrouter" => vec![
             (
+                "openrouter/free",
+                "OpenRouter Free (auto-routing, recommended for free tier)",
+            ),
+            (
+                "google/gemma-3-12b-it:free",
+                "Gemma 3 12B (Free, fast)",
+            ),
+            (
                 "anthropic/claude-sonnet-4-20250514",
                 "Claude Sonnet 4 (balanced, recommended)",
             ),
