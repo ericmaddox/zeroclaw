@@ -23,8 +23,11 @@ pub use whatsapp::WhatsAppChannel;
 use crate::config::Config;
 use crate::identity;
 use crate::memory::{self, Memory};
-use crate::providers::{self, Provider};
+use crate::providers::{self, ChatMessage, Provider};
 use crate::util::truncate_with_ellipsis;
+use crate::agent::{agent_turn, build_tool_instructions};
+use crate::observability::{self, Observer};
+use crate::tools;
 use anyhow::Result;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -527,6 +530,10 @@ pub async fn start_channels(config: Config) -> Result<()> {
             "memory_forget",
             "Delete a memory entry. Use when: memory is incorrect/stale or explicitly requested for removal. Don't use when: impact is uncertain.",
         ),
+        (
+            "exa_search",
+            "Search the web using Exa AI. Use when: you need real-time information, news, or high-quality links that aren't in your training data.",
+        ),
     ];
 
     if config.browser.enabled {
@@ -536,13 +543,40 @@ pub async fn start_channels(config: Config) -> Result<()> {
         ));
     }
 
-    let system_prompt = build_system_prompt(
+    let mut system_prompt = build_system_prompt(
         &workspace,
         &model,
         &tool_descs,
         &skills,
         Some(&config.identity),
     );
+
+    // Initialize subsystems for tool use
+    let observer: Arc<dyn Observer> =
+        Arc::from(observability::create_observer(&config.observability));
+    let security = Arc::new(crate::security::SecurityPolicy::from_config(
+        &config.autonomy,
+        &config.workspace_dir,
+    ));
+    let runtime: Arc<dyn crate::runtime::RuntimeAdapter> =
+        Arc::from(crate::runtime::create_runtime(&config.runtime)?);
+    let composio_key = if config.composio.enabled {
+        config.composio.api_key.as_deref()
+    } else {
+        None
+    };
+    let exa_key = config.search.exa_api_key.as_deref();
+    let tools_registry = tools::all_tools_with_runtime(
+        &security,
+        runtime,
+        mem.clone(),
+        composio_key,
+        exa_key,
+        &config.browser,
+    );
+
+    // Append structured tool-use instructions with schemas
+    system_prompt.push_str(&build_tool_instructions(&tools_registry));
 
     if !skills.is_empty() {
         println!(
@@ -696,9 +730,22 @@ pub async fn start_channels(config: Config) -> Result<()> {
         println!("  ⏳ Processing message...");
         let started_at = Instant::now();
 
+        // Channels are currently stateless per-user, so we start fresh history for each turn
+        let mut history = vec![
+            ChatMessage::system(&system_prompt),
+            ChatMessage::user(&msg.content),
+        ];
+
         let llm_result = tokio::time::timeout(
             Duration::from_secs(CHANNEL_MESSAGE_TIMEOUT_SECS),
-            provider.chat_with_system(Some(&system_prompt), &msg.content, &model, temperature),
+            agent_turn(
+                provider.as_ref(),
+                &mut history,
+                &tools_registry,
+                observer.as_ref(),
+                &model,
+                temperature,
+            ),
         )
         .await;
 
